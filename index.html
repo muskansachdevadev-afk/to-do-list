@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>To-Do List</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+  <h3>To-Do List</h3>
+
+  <div class="row">
+    <input id="taskInput" placeholder="Enter task">
+    <select id="priority">
+      <option value="">Set priority</option>
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+  </div>
+
+  <button class="add-btn" onclick="addTask()">Add</button>
+
+  <div class="filters">
+    <button onclick="setFilter('all')" id="allBtn">All</button>
+    <button onclick="setFilter('active')" id="activeBtn">Active</button>
+    <button onclick="setFilter('completed')" id="completedBtn">Completed</button>
+  </div>
+
+  <div id="progress"></div>
+
+  <div class="bar-container">
+    <div class="bar" id="bar"></div>
+  </div>
+
+  <ul id="list"></ul>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let filter = "all";
+
+function save() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function setFilter(f) {
+  filter = f;
+  render();
+}
+
+function addTask() {
+  const text = document.getElementById("taskInput").value.trim();
+  let priority = document.getElementById("priority").value;
+
+  if (!text) return;
+  if (!priority) priority = "medium";
+
+  tasks.push({ text, priority, done: false });
+
+  save();
+  render();
+
+  document.getElementById("taskInput").value = "";
+  document.getElementById("priority").value = "";
+}
+
+function render() {
+  const list = document.getElementById("list");
+  const progress = document.getElementById("progress");
+  const bar = document.getElementById("bar");
+
+  list.innerHTML = "";
+
+  document.querySelectorAll(".filters button").forEach(b => b.classList.remove("active"));
+  document.getElementById(filter + "Btn").classList.add("active");
+
+  let filtered = tasks.filter(t => {
+    if (filter === "active") return !t.done;
+    if (filter === "completed") return t.done;
+    return true;
+  });
+
+  filtered.forEach((task, i) => {
+    const li = document.createElement("li");
+    li.className = task.priority;
+
+    const span = document.createElement("span");
+    span.textContent = task.text;
+
+    if (task.done) span.classList.add("done");
+
+    span.onclick = () => {
+      task.done = !task.done;
+      save();
+      render();
+    };
+
+    const btn = document.createElement("button");
+    btn.textContent = "X";
+
+    btn.onclick = () => {
+      tasks.splice(i, 1);
+      save();
+      render();
+    };
+
+    li.appendChild(span);
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
+
+  const total = tasks.length;
+  const done = tasks.filter(t => t.done).length;
+
+  if (total) {
+    progress.textContent = `${done} / ${total} completed`;
+    bar.style.width = (done / total) * 100 + "%";
+  } else {
+    progress.textContent = "No tasks yet ✨";
+    bar.style.width = "0%";
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
